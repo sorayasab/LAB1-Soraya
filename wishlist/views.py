@@ -1,22 +1,17 @@
 from django.http import HttpResponse
 from django.core import serializers
-
 from django.shortcuts import render
 from wishlist.models import BarangWishlist
-
 from django.shortcuts import redirect
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
-
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-
 import datetime
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-
-# Create your views here.
+from django.views.decorators.csrf import csrf_exempt
 
 @login_required(login_url='/wishlist/login/')
 def show_wishlist(request):
@@ -27,6 +22,28 @@ def show_wishlist(request):
         'last_login': request.COOKIES['last_login'],
     }
     return render(request, "wishlist.html", context)
+
+@login_required(login_url='/wishlist/login/')
+def wishlist_ajax(request):
+    data_barang_wishlist = BarangWishlist.objects.all()
+    context = {
+        'list_barang': data_barang_wishlist,
+        'nama': 'Soraya Sabrina',
+        'last_login': request.COOKIES['last_login'],
+    }
+    return render(request, "wishlist_ajax.html", context)
+
+@login_required(login_url='/wishlist/login/')
+@csrf_exempt
+def add_wishlist(req):
+    if req.method == "POST":
+        nama_barang = req.POST.get("nama")
+        harga_barang = req.POST.get("harga")
+        deskripsi_barang = req.POST.get("deskripsi")
+        BarangWishlist.objects.create(nama_barang = nama_barang, harga_barang = harga_barang, deskripsi = deskripsi_barang)
+        return HttpResponse()
+    else:
+        return redirect("wishlist:show_wishlist")
 
 def show_xml(request):
     data = BarangWishlist.objects.all()
